@@ -1,0 +1,60 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: livesignalmap-app
+    ports:
+      - "8080:8080"
+    environment:
+      # Spring профиль
+      SPRING_PROFILES_ACTIVE: docker
+
+      # Подключение к БД (имя сервиса 'db' как хост)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/signalmap
+      SPRING_DATASOURCE_USERNAME: signalmap
+      SPRING_DATASOURCE_PASSWORD: signalmap
+
+      # JPA настройки
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_JPA_SHOW_SQL: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+    networks:
+      - signalmap-network
+
+  db:
+    image: postgres:17-alpine
+    container_name: livesignalmap-db
+    environment:
+      POSTGRES_DB: signalmap
+      POSTGRES_USER: signalmap
+      POSTGRES_PASSWORD: signalmap
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U signalmap"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - signalmap-network
+
+volumes:
+  postgres-data:
+
+networks:
+  signalmap-network:
+    driver: bridge

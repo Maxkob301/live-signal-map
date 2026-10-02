@@ -1,0 +1,165 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: maxkob
+      changes:
+        - createTable:
+            tableName: auditoriums
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: building
+                  type: VARCHAR(255)
+              - column:
+                  name: floor
+                  type: INT
+
+  - changeSet:
+      id: 2
+      author: maxkob
+      changes:
+        - createTable:
+            tableName: bssid_mapping
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: bssid
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: auditorium_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_bssid_auditorium
+                    references: auditoriums(id)
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: 3
+      author: maxkob
+      changes:
+        - createTable:
+            tableName: wifi_measurements
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: bssid
+                  type: VARCHAR(255)
+              - column:
+                  name: auditorium_id
+                  type: BIGINT
+              - column:
+                  name: download_speed
+                  type: DOUBLE PRECISION
+              - column:
+                  name: upload_speed
+                  type: DOUBLE PRECISION
+              - column:
+                  name: ping
+                  type: INT
+              - column:
+                  name: rssi
+                  type: INT
+              - column:
+                  name: timestamp
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+              - column:
+                  name: device_hash
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: 4
+      author: maxkob
+      changes:
+        - createTable:
+            tableName: mobile_measurements
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: operator
+                  type: VARCHAR(255)
+              - column:
+                  name: download_speed
+                  type: DOUBLE PRECISION
+              - column:
+                  name: upload_speed
+                  type: DOUBLE PRECISION
+              - column:
+                  name: ping
+                  type: INT
+              - column:
+                  name: timestamp
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+              - column:
+                  name: device_hash
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: 5
+      author: maxkob
+      changes:
+        - addNotNullConstraint:
+            tableName: wifi_measurements
+            columnName: created_at
+            columnDataType: TIMESTAMPTZ
+
+  - changeSet:
+      id: 6
+      author: maxkob
+      changes:
+        - addNotNullConstraint:
+            tableName: mobile_measurements
+            columnName: created_at
+            columnDataType: TIMESTAMPTZ
+
+  - changeSet:
+      id: 7
+      author: maxkob
+      changes:
+        - addNotNullConstraint:
+            tableName: bssid_mapping
+            columnName: created_at
+            columnDataType: TIMESTAMPTZ
