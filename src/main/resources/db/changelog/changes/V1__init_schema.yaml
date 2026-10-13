@@ -163,3 +163,25 @@ databaseChangeLog:
             tableName: bssid_mapping
             columnName: created_at
             columnDataType: TIMESTAMPTZ
+  - changeSet:
+      id: 8
+      author: maxkob
+      changes:
+        - addColumn:
+            tableName: mobile_measurements
+            columns:
+              - column:
+                  name: auditorium_id
+                  type: BIGINT
+        - addForeignKeyConstraint:
+            baseTableName: mobile_measurements
+            baseColumnNames: auditorium_id
+            referencedTableName: auditoriums
+            referencedColumnNames: id
+            constraintName: fk_mobile_measurements_auditorium
+        - createIndex:
+            tableName: mobile_measurements
+            indexName: idx_mobile_measurements_auditorium
+            columns:
+              - column:
+                  name: auditorium_id

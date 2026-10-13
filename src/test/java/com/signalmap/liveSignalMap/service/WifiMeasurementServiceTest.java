@@ -1,11 +1,14 @@
 package com.signalmap.liveSignalMap.service;
 
 import com.signalmap.liveSignalMap.AbstractIntegrationTest;
-import com.signalmap.liveSignalMap.entity.WifiMeasurement;
+import com.signalmap.liveSignalMap.dto.WifiMeasurementRequest;
+import com.signalmap.liveSignalMap.dto.WifiMeasurementResponse;
+import com.signalmap.liveSignalMap.entity.Auditorium;
+import com.signalmap.liveSignalMap.entity.BssidMapping;
+import com.signalmap.liveSignalMap.repository.AuditoriumRepository;
+import com.signalmap.liveSignalMap.repository.BssidMappingRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,45 +17,63 @@ class WifiMeasurementServiceTest extends AbstractIntegrationTest {
     @Autowired
     private WifiMeasurementService wifiMeasurementService;
 
+    @Autowired
+    private AuditoriumRepository auditoriumRepository;
+
+    @Autowired
+    private BssidMappingRepository bssidMappingRepository;
+
     @Test
-    void shouldSaveMeasurementAndSetCreatedAt() {
-        // Arrange
-        WifiMeasurement measurement = new WifiMeasurement();
-        measurement.setBssid("AA:BB:CC:DD:EE:FF");
-        measurement.setAuditoriumId(1L);
-        measurement.setDownloadSpeed(50.5);
-        measurement.setUploadSpeed(10.2);
-        measurement.setPing(15);
-        measurement.setRssi(-60);
-        measurement.setTimestamp(LocalDateTime.now());
-        measurement.setDeviceHash("test-hash-wifi");
+    void shouldSaveMeasurementAndResolveAuditoriumByBssid() {
+        // Arrange: создаём аудиторию и привязку BSSID
+        Auditorium auditorium = new Auditorium();
+        auditorium.setName("Test Auditorium");
+        auditorium.setBuilding("Main");
+        Auditorium savedAuditorium = auditoriumRepository.save(auditorium);
+
+        BssidMapping mapping = new BssidMapping();
+        mapping.setBssid("AA:BB:CC:DD:EE:FF");
+        mapping.setAuditoriumId(savedAuditorium.getId());
+        mapping.setCreatedAt(java.time.LocalDateTime.now());
+        bssidMappingRepository.save(mapping);
+
+        WifiMeasurementRequest request = new WifiMeasurementRequest();
+        request.setBssid("AA:BB:CC:DD:EE:FF");
+        request.setDownloadSpeed(50.5);
+        request.setUploadSpeed(10.2);
+        request.setPing(15);
+        request.setRssi(-60);
+        request.setDeviceHash("test-hash-wifi");
 
         // Act
-        WifiMeasurement saved = wifiMeasurementService.save(measurement);
+        WifiMeasurementResponse response = wifiMeasurementService.save(request);
 
         // Assert
-        assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getCreatedAt()).isNotNull();
-        assertThat(saved.getBssid()).isEqualTo("AA:BB:CC:DD:EE:FF");
-        assertThat(saved.getAuditoriumId()).isEqualTo(1L);
-        assertThat(saved.getDownloadSpeed()).isEqualTo(50.5);
-        assertThat(saved.getUploadSpeed()).isEqualTo(10.2);
-        assertThat(saved.getPing()).isEqualTo(15);
-        assertThat(saved.getRssi()).isEqualTo(-60);
+        assertThat(response.getId()).isNotNull();
+        assertThat(response.getBssid()).isEqualTo("AA:BB:CC:DD:EE:FF");
+        assertThat(response.getAuditoriumId()).isEqualTo(savedAuditorium.getId());
+        assertThat(response.isMapped()).isTrue();
+        assertThat(response.getDownloadSpeed()).isEqualTo(50.5);
+        assertThat(response.getPing()).isEqualTo(15);
+        assertThat(response.getTimestamp()).isNotNull();
     }
 
     @Test
-    void shouldAlwaysOverrideCreatedAt() {
-        // Arrange
-        WifiMeasurement measurement = new WifiMeasurement();
-        measurement.setBssid("11:22:33:44:55:66");
-        measurement.setTimestamp(LocalDateTime.now());
-        measurement.setCreatedAt(LocalDateTime.of(2000, 1, 1, 0, 0));
+    void shouldSaveMeasurementWithoutAuditoriumWhenBssidUnknown() {
+        // Arrange: BSSID, которого нет в маппинге
+        WifiMeasurementRequest request = new WifiMeasurementRequest();
+        request.setBssid("FF:FF:FF:FF:FF:FF");
+        request.setDownloadSpeed(10.0);
+        request.setUploadSpeed(5.0);
+        request.setPing(100);
 
         // Act
-        WifiMeasurement saved = wifiMeasurementService.save(measurement);
+        WifiMeasurementResponse response = wifiMeasurementService.save(request);
 
         // Assert
-        assertThat(saved.getCreatedAt().getYear()).isGreaterThan(2000);
+        assertThat(response.getId()).isNotNull();
+        assertThat(response.getAuditoriumId()).isNull();
+        assertThat(response.isMapped()).isFalse();
+        assertThat(response.getTimestamp()).isNotNull();
     }
 }

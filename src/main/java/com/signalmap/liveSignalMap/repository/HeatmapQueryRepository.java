@@ -38,17 +38,25 @@ public class HeatmapQueryRepository {
                 .leftJoin(a).on(a.id.eq(w.auditoriumId))
                 .where(
                         w.auditoriumId.isNotNull(),
-                        w.timestamp.between(from, to)
+                        w.timestamp.between(from, to),
+                        w.downloadSpeed.gt(0),
+                        w.downloadSpeed.lt(10000),
+                        w.ping.gt(0)
                 )
                 .groupBy(w.auditoriumId, a.name, a.building)
+                .having(w.count().goe(3))   // минимум 3 замера для достоверности
                 .fetch();
     }
 
     public List<MobileHeatmapDto> getMobileHeatmap(LocalDateTime from, LocalDateTime to) {
         QMobileMeasurement m = QMobileMeasurement.mobileMeasurement;
+        QAuditorium a = QAuditorium.auditorium;
 
         return queryFactory
                 .select(Projections.constructor(MobileHeatmapDto.class,
+                        m.auditoriumId,
+                        a.name,
+                        a.building,
                         m.operator,
                         m.downloadSpeed.avg(),
                         m.uploadSpeed.avg(),
@@ -56,11 +64,17 @@ public class HeatmapQueryRepository {
                         m.count()
                 ))
                 .from(m)
+                .leftJoin(a).on(a.id.eq(m.auditoriumId))
                 .where(
+                        m.auditoriumId.isNotNull(),
                         m.operator.isNotNull(),
-                        m.timestamp.between(from, to)
+                        m.timestamp.between(from, to),
+                        m.downloadSpeed.gt(0),
+                        m.downloadSpeed.lt(10000),
+                        m.ping.gt(0)
                 )
-                .groupBy(m.operator)
+                .groupBy(m.auditoriumId, a.name, a.building, m.operator)
+                .having(m.count().goe(3))
                 .fetch();
     }
 }

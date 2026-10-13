@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MobileHeatmapDto {
+    private Long auditoriumId;
+    private String auditoriumName;
+    private String building;
     private String operator;
     private Double avgDownloadSpeed;
     private Double avgUploadSpeed;

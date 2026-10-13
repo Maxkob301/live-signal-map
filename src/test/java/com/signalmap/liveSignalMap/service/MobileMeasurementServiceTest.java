@@ -1,11 +1,12 @@
 package com.signalmap.liveSignalMap.service;
 
 import com.signalmap.liveSignalMap.AbstractIntegrationTest;
-import com.signalmap.liveSignalMap.entity.MobileMeasurement;
+import com.signalmap.liveSignalMap.dto.MobileMeasurementRequest;
+import com.signalmap.liveSignalMap.dto.MobileMeasurementResponse;
+import com.signalmap.liveSignalMap.entity.Auditorium;
+import com.signalmap.liveSignalMap.repository.AuditoriumRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,41 +15,54 @@ class MobileMeasurementServiceTest extends AbstractIntegrationTest {
     @Autowired
     private MobileMeasurementService mobileMeasurementService;
 
+    @Autowired
+    private AuditoriumRepository auditoriumRepository;
+
     @Test
-    void shouldSaveMeasurementAndSetCreatedAt() {
-        // Arrange
-        MobileMeasurement measurement = new MobileMeasurement();
-        measurement.setOperator("MTS");
-        measurement.setDownloadSpeed(25.5);
-        measurement.setUploadSpeed(5.5);
-        measurement.setPing(30);
-        measurement.setTimestamp(LocalDateTime.now());
-        measurement.setDeviceHash("test-hash-mobile");
+    void shouldSaveMeasurementAndSetTimestamp() {
+        // Arrange: создаём аудиторию, чтобы внешний ключ сработал
+        Auditorium auditorium = new Auditorium();
+        auditorium.setName("Test Auditorium");
+        auditorium.setBuilding("Main");
+        Auditorium savedAuditorium = auditoriumRepository.save(auditorium);
+
+        MobileMeasurementRequest request = new MobileMeasurementRequest();
+        request.setOperator("MTS");
+        request.setAuditoriumId(savedAuditorium.getId());  // ← реальный ID
+        request.setDownloadSpeed(25.5);
+        request.setUploadSpeed(5.5);
+        request.setPing(30);
+        request.setDeviceHash("test-hash-mobile");
 
         // Act
-        MobileMeasurement saved = mobileMeasurementService.save(measurement);
+        MobileMeasurementResponse response = mobileMeasurementService.save(request);
 
         // Assert
-        assertThat(saved.getId()).isNotNull();
-        assertThat(saved.getCreatedAt()).isNotNull();
-        assertThat(saved.getOperator()).isEqualTo("MTS");
-        assertThat(saved.getDownloadSpeed()).isEqualTo(25.5);
-        assertThat(saved.getUploadSpeed()).isEqualTo(5.5);
-        assertThat(saved.getPing()).isEqualTo(30);
+        assertThat(response.getId()).isNotNull();
+        assertThat(response.getOperator()).isEqualTo("MTS");
+        assertThat(response.getAuditoriumId()).isEqualTo(savedAuditorium.getId());
+        assertThat(response.getDownloadSpeed()).isEqualTo(25.5);
+        assertThat(response.getPing()).isEqualTo(30);
+        assertThat(response.getTimestamp()).isNotNull();
     }
 
     @Test
-    void shouldAlwaysOverrideCreatedAt() {
+    void shouldSaveMeasurementWithoutAuditorium() {
         // Arrange
-        MobileMeasurement measurement = new MobileMeasurement();
-        measurement.setOperator("Beeline");
-        measurement.setTimestamp(LocalDateTime.now());
-        measurement.setCreatedAt(LocalDateTime.of(2000, 1, 1, 0, 0));
+        MobileMeasurementRequest request = new MobileMeasurementRequest();
+        request.setOperator("Beeline");
+        request.setDownloadSpeed(10.0);
+        request.setUploadSpeed(2.0);
+        request.setPing(50);
+        // auditoriumId не задаём — null
 
         // Act
-        MobileMeasurement saved = mobileMeasurementService.save(measurement);
+        MobileMeasurementResponse response = mobileMeasurementService.save(request);
 
         // Assert
-        assertThat(saved.getCreatedAt().getYear()).isGreaterThan(2000);
+        assertThat(response.getId()).isNotNull();
+        assertThat(response.getOperator()).isEqualTo("Beeline");
+        assertThat(response.getAuditoriumId()).isNull();
+        assertThat(response.getTimestamp()).isNotNull();
     }
 }

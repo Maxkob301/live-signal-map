@@ -1,27 +1,36 @@
 package com.signalmap.liveSignalMap.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data
 @Entity
 @Table(name = "mobile_measurements")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class MobileMeasurement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String operator;
 
-    @Column(name = "download_speed")
+    @Column(name = "auditorium_id")
+    private Long auditoriumId;
+
+    @Column(name = "download_speed", nullable = false)
     private Double downloadSpeed;
 
-    @Column(name = "upload_speed")
+    @Column(name = "upload_speed", nullable = false)
     private Double uploadSpeed;
 
+    @Column(nullable = false)
     private Integer ping;
 
     @Column(nullable = false)
@@ -32,4 +41,14 @@ public class MobileMeasurement {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (timestamp == null) {
+            timestamp = LocalDateTime.now();
+        }
+    }
 }
