@@ -1,3 +1,4 @@
+
 package com.signalmap.liveSignalMap.entity;
 
 import jakarta.persistence.*;
@@ -22,4 +23,11 @@ public class BssidMapping {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
 }

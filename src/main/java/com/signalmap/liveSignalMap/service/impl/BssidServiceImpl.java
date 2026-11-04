@@ -1,13 +1,18 @@
+
 package com.signalmap.liveSignalMap.service.impl;
 
+import com.signalmap.liveSignalMap.dto.BssidMappingRequest;
+import com.signalmap.liveSignalMap.dto.BssidMappingResponse;
 import com.signalmap.liveSignalMap.entity.BssidMapping;
+import com.signalmap.liveSignalMap.exception.BssidAlreadyExistsException;
 import com.signalmap.liveSignalMap.exception.BssidNotFoundException;
+import com.signalmap.liveSignalMap.repository.AuditoriumRepository;
 import com.signalmap.liveSignalMap.repository.BssidMappingRepository;
 import com.signalmap.liveSignalMap.service.BssidService;
+import com.signalmap.liveSignalMap.exception.AuditoriumNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -16,25 +21,54 @@ public class BssidServiceImpl implements BssidService {
 
     private final BssidMappingRepository bssidMappingRepository;
 
-    @Override
-    public BssidMapping create(BssidMapping mapping) {
-        mapping.setCreatedAt(LocalDateTime.now());
-        return bssidMappingRepository.save(mapping);
-    }
+    private final AuditoriumRepository auditoriumRepository;
+
+
 
     @Override
-    public BssidMapping findByBssid(String bssid) {
-        return bssidMappingRepository.findByBssid(bssid)
+    public BssidMappingResponse create(BssidMappingRequest request) {
+
+        if (bssidMappingRepository.existsByBssid(request.getBssid())) {
+            throw new BssidAlreadyExistsException(request.getBssid());
+        }
+
+        if (!auditoriumRepository.existsById(request.getAuditoriumId())) {
+            throw new AuditoriumNotFoundException(
+                    request.getAuditoriumId()
+            );
+        }
+
+        BssidMapping mapping = new BssidMapping();
+        mapping.setBssid(request.getBssid());
+        mapping.setAuditoriumId(request.getAuditoriumId());
+
+        BssidMapping saved = bssidMappingRepository.save(mapping);
+
+        return BssidMappingResponse.from(saved);
+    }
+
+
+
+    @Override
+    public BssidMappingResponse findByBssid(String bssid) {
+        BssidMapping mapping = bssidMappingRepository.findByBssid(bssid)
                 .orElseThrow(() -> new BssidNotFoundException(bssid));
+
+        return BssidMappingResponse.from(mapping);
     }
 
     @Override
-    public List<BssidMapping> findAll() {
-        return bssidMappingRepository.findAll();
+    public List<BssidMappingResponse> findAll() {
+        return bssidMappingRepository.findAll()
+                .stream()
+                .map(BssidMappingResponse::from)
+                .toList();
     }
 
     @Override
     public void delete(Long id) {
         bssidMappingRepository.deleteById(id);
     }
+
+
 }

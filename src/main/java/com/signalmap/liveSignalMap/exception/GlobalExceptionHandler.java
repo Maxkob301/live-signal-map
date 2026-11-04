@@ -7,8 +7,6 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,6 +40,41 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.of(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", null));
     }
+
+
+
+    @ExceptionHandler(BssidAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleBssidAlreadyExists(
+            BssidAlreadyExistsException ex) {
+
+        ErrorResponse response = ErrorResponse.of(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
+
+    @ExceptionHandler(AuditoriumHasDependenciesException.class)
+    public ResponseEntity<ErrorResponse> handleAuditoriumHasDependencies(
+            AuditoriumHasDependenciesException ex) {
+
+        ErrorResponse response = ErrorResponse.of(
+                HttpStatus.CONFLICT,
+                ex.getMessage(),
+                null
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(response);
+    }
+
+
 
 
 }

@@ -12,4 +12,8 @@ import java.util.Optional;
 public interface BssidMappingRepository extends JpaRepository<BssidMapping, Long> {
 
     Optional<BssidMapping> findByBssid(String bssid);
+
+    boolean existsByBssid(String bssid);
+
+    boolean existsByAuditoriumId(Long id);
 }

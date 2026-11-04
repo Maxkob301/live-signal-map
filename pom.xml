@@ -66,6 +66,21 @@
             <artifactId>liquibase-core</artifactId>
         </dependency>
 
+
+        <!-- Защита HTTP API -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- Инструменты тестирования безопасности -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+
         <!-- QueryDSL -->
         <dependency>
             <groupId>com.querydsl</groupId>
@@ -149,36 +164,49 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.4</version>
                 <configuration>
-                    <argLine>-Xmx2048m -Dfile.encoding=${project.build.sourceEncoding}</argLine>
+                    <argLine>
+                        -Xmx2048m
+                        -Dfile.encoding=${project.build.sourceEncoding}
+                        -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar
+                    </argLine>
                 </configuration>
             </plugin>
 
-            <!-- OpenClover — замена JaCoCo. Работает через offline-инструментацию, без -javaagent -->
-            <plugin>
-                <groupId>org.openclover</groupId>
-                <artifactId>clover-maven-plugin</artifactId>
-                <version>4.5.2</version>
-                <configuration>
-                    <skip>${clover.skip}</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>setup</id>
-                        <phase>process-sources</phase>
-                        <goals>
-                            <goal>setup</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>clover</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>clover</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>coverage</id>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.openclover</groupId>
+                        <artifactId>clover-maven-plugin</artifactId>
+                        <version>4.5.2</version>
+
+                        <executions>
+                            <execution>
+                                <id>setup</id>
+                                <phase>process-sources</phase>
+                                <goals>
+                                    <goal>setup</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>clover</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>clover</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

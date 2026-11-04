@@ -11,5 +11,5 @@ import java.util.List;
 
 @Repository
 public interface MobileMeasurementRepository extends JpaRepository<MobileMeasurement, Long> {
-
+    boolean existsByAuditoriumId(Long auditoriumId);
 }

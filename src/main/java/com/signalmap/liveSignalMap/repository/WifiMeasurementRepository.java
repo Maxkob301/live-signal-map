@@ -11,5 +11,5 @@ import java.util.List;
 
 @Repository
 public interface WifiMeasurementRepository extends JpaRepository<WifiMeasurement, Long> {
-
+    boolean existsByAuditoriumId(Long auditoriumId);
 }

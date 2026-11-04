@@ -1,16 +1,18 @@
+
 package com.signalmap.liveSignalMap.service;
 
-import com.signalmap.liveSignalMap.entity.BssidMapping;
+import com.signalmap.liveSignalMap.dto.BssidMappingRequest;
+import com.signalmap.liveSignalMap.dto.BssidMappingResponse;
 
 import java.util.List;
 
 public interface BssidService {
 
-    BssidMapping create(BssidMapping mapping);
+    BssidMappingResponse create(BssidMappingRequest request);
 
-    BssidMapping findByBssid(String bssid);
+    BssidMappingResponse findByBssid(String bssid);
 
-    List<BssidMapping> findAll();
+    List<BssidMappingResponse> findAll();
 
     void delete(Long id);
 }
